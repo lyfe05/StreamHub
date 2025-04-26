@@ -1,15 +1,30 @@
-const channels = [
-    { name: "Trace Mziki", icon: "https://www.dstv.com/media/upcgizd5/trace-mziki-logo-set-1_320x320.png?width=164", link: "http://starshare.org:8080/live/Akhil/Akhil/476795.m3u8" },
-    { name: "BBC News", icon: "https://example.com/bbc.png", link: "https://example.com/bbc.m3u8" },
-    { name: "ESPN", icon: "https://example.com/espn.png", link: "https://example.com/espn.m3u8" }
-];
+document.addEventListener("DOMContentLoaded", function () {
+    const m3uUrl = "channels.m3u"; // Change to your actual M3U file path
+    const channelList = document.getElementById("channel-list");
 
-const container = document.getElementById("channels");
-channels.forEach(channel => {
-    let item = document.createElement("div");
-    item.className = "channel";
-    item.innerHTML = `<img src="${channel.icon}" alt="${channel.name}">
-                      <p>${channel.name}</p>`;
-    item.onclick = () => window.location.href = `watch.html?channel=${encodeURIComponent(channel.link)}`;
-    container.appendChild(item);
+    fetch(m3uUrl)
+        .then(response => response.text())
+        .then(data => {
+            const lines = data.split("\n");
+            let channels = [];
+
+            for (let i = 0; i < lines.length; i++) {
+                if (lines[i].startsWith("#EXTINF")) {
+                    let title = lines[i].split(",")[1].trim();
+                    let streamUrl = lines[i + 1].trim();
+                    channels.push({ title, streamUrl });
+                }
+            }
+
+            channels.forEach(channel => {
+                let channelDiv = document.createElement("div");
+                channelDiv.className = "channel";
+                channelDiv.textContent = channel.title;
+                channelDiv.onclick = function () {
+                    window.location.href = `stream.html?url=${encodeURIComponent(channel.streamUrl)}`;
+                };
+                channelList.appendChild(channelDiv);
+            });
+        })
+        .catch(error => console.error("Error loading M3U file:", error));
 });
