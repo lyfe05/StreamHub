@@ -1,41 +1,15 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Stream Player</title>
-    <link rel="stylesheet" href="styles.css">
-</head>
-<body>
+<ul id="channel-list"></ul>
 
-    <h1>Live Stream Player</h1>
-    
-    <input type="text" id="streamURL" placeholder="Enter stream URL">
-    <button onclick="playStream()">Play</button>
-
-    <video id="videoPlayer" controls></video>
-
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-    <script>
-        function playStream() {
-            var url = document.getElementById('streamURL').value;
-            var video = document.getElementById('videoPlayer');
-
-            if (Hls.isSupported()) {
-                var hls = new Hls();
-                hls.loadSource(url);
-                hls.attachMedia(video);
-                hls.on(Hls.Events.MANIFEST_PARSED, function() {
-                    video.play();
-                });
-            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-                video.src = url;
-                video.play();
-            } else {
-                alert("HLS is not supported in your browser.");
-            }
-        }
-    </script>
-
-</body>
-</html>
+<script>
+fetch('/channels')
+  .then(res => res.json())
+  .then(data => {
+    const list = document.getElementById('channel-list');
+    data.forEach(channel => {
+      let item = document.createElement('li');
+      item.textContent = channel.name;
+      item.onclick = () => window.location.href = `/watch?id=${channel.id}`;
+      list.appendChild(item);
+    });
+  });
+</script>
