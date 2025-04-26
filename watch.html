@@ -5,17 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Watch Live</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.2.6/hls.min.js"></script>
-    <style>
-        body { font-family: Arial, sans-serif; text-align: center; }
-        video { width: 80%; max-width: 800px; }
-    </style>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <h1>Live Stream</h1>
     <video id="videoPlayer" controls autoplay></video>
 
     <script>
-        // Get Channel URL from Query Parameters
         const urlParams = new URLSearchParams(window.location.search);
         const streamUrl = urlParams.get("channel");
 
