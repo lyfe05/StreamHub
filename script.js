@@ -1,5 +1,5 @@
 const channels = [
-    { name: "CNN", icon: "https://example.com/cnn.png", link: "https://example.com/cnn.m3u8" },
+    { name: "Trace Mziki", icon: "https://www.dstv.com/media/upcgizd5/trace-mziki-logo-set-1_320x320.png?width=164", link: "http://starshare.org:8080/live/Akhil/Akhil/476795.m3u8" },
     { name: "BBC News", icon: "https://example.com/bbc.png", link: "https://example.com/bbc.m3u8" },
     { name: "ESPN", icon: "https://example.com/espn.png", link: "https://example.com/espn.m3u8" }
 ];
