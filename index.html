@@ -1,36 +1,221 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Play .m3u8 File in HTML5 video player</title>
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stable HLS Video Player</title>
+  <!-- Video.js CSS -->
+  <link href="https://vjs.zencdn.net/8.10.0/video-js.css" rel="stylesheet" onerror="this.onerror=null; this.href='https://cdn.jsdelivr.net/npm/video.js@8.10.0/dist/video-js.min.css';">
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      background-color: #f0f0f0;
+      font-family: Arial, sans-serif;
+    }
+    .video-container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .video-js {
+      width: 100%;
+      height: auto;
+    }
+    #error-display {
+      color: red;
+      margin-top: 10px;
+      font-size: 14px;
+    }
+    .vjs-quality-selector .vjs-menu-button {
+      cursor: pointer;
+      margin: 0 5px;
+    }
+    .vjs-quality-selector .vjs-menu .vjs-menu-content {
+      background-color: #2b333f;
+      color: #fff;
+      border-radius: 4px;
+    }
+    .vjs-quality-selector .vjs-menu li {
+      padding: 8px 12px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .vjs-quality-selector .vjs-menu li:hover {
+      background-color: #3a4556;
+    }
+    .vjs-quality-selector .vjs-menu li.vjs-selected {
+      background-color: #007bff;
+    }
+  </style>
 </head>
 <body>
-   <!-- Include the hls.js library -->
+  <div class="video-container">
+    <video
+      id="my-video"
+      class="video-js vjs-default-skin"
+      controls
+      preload="auto"
+      width="640"
+      height="360"
+      data-setup='{"fluid": true}'
+    >
+      <source src="http://top102856-4k.org:80/live/abderahimkangoo201/pk6o5g2s9o/10511.m3u8" type="application/x-mpegURL">
+      <p class="vjs-no-js">
+        To view this video, please enable JavaScript, and consider upgrading to a web browser that
+        <a href="https://videojs.com/html5-video-support/" target="_blank">supports HTML5 video</a>
+      </p>
+    </video>
+    <div id="error-display"></div>
+  </div>
 
-<!-- Create a video element -->
-<video id="video" controls></video>
+  <!-- Video.js JavaScript with fallback -->
+  <script src="https://vjs.zencdn.net/8.10.0/video.min.js" onerror="this.onerror=null; this.src='https://cdn.jsdelivr.net/npm/video.js@8.10.0/dist/video.min.js';"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Check if Video.js loaded successfully
+      if (typeof videojs === 'undefined') {
+        document.getElementById('error-display').textContent = 'Error: Video.js failed to load. Check console for details.';
+        console.error('Video.js failed to load from both CDNs.');
+        return;
+      }
 
-<!-- Use hls.js to create a player and load the .m3u8 file -->
-<script>
-  var video = document.getElementById('video');
-  if(Hls.isSupported()) {
-    var hls = new Hls();
-    hls.loadSource('http://top102856-4k.org:80/live/abderahimkangoo201/pk6o5g2s9o/10511.m3u8');
-    hls.attachMedia(video);
-    video.play();
-  }
-  else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-    video.src = 'http://top102856-4k.org:80/live/abderahimkangoo201/pk6o5g2s9o/10511.m3u8';
-    video.addEventListener('loadedmetadata',function() {
-      video.play();
+      // Initialize Video.js player
+      const player = videojs('my-video', {
+        controls: true,
+        autoplay: false,
+        preload: 'auto',
+        fluid: true,
+        html5: {
+          nativeVideoTracks: true,
+          nativeAudioTracks: true,
+          hls: {
+            enableLowInitialPlaylist: true,
+            smoothQualityChange: true,
+            fastQualityChange: true,
+            limitRenditionByPlayerDimensions: true,
+            bandwidth: 2000000,
+            minBufferLength: 20 // Increased to 20s for better stability
+          }
+        }
+      });
+
+      const QualityLevels = videojs.getPlugin('qualityLevels');
+      const qualityLevels = player.qualityLevels();
+
+      const QualitySelector = videojs.extend(videojs.getComponent('MenuButton'), {
+        constructor: function(player, options) {
+          videojs.getComponent('MenuButton').call(this, player, options);
+          this.addClass('vjs-quality-selector');
+        },
+        handleClick: function() {
+          videojs.getComponent('MenuButton').prototype.handleClick.call(this);
+        },
+        createMenu: function() {
+          const menu = new videojs.getComponent('Menu')(this.player_);
+          const items = [];
+          
+          items.push(new videojs.getComponent('MenuItem')(this.player_, {
+            label: 'Auto',
+            selectable: true,
+            selected: true,
+            multiSelectable: false,
+            clickHandler: () => {
+              qualityLevels.levels_.forEach(level => {
+                level.enabled = true;
+              });
+              this.updateMenu('Auto');
+              console.log('Switched to Auto bitrate');
+            }
+          }));
+
+          qualityLevels.on('change', () => {
+            while (menu.children().length > 1) {
+              menu.removeChild(menu.children()[1]);
+            }
+            qualityLevels.levels_.forEach((level, index) => {
+              const height = level.height || `${Math.round(level.bitrate / 1000)}kbps`;
+              const item = new videojs.getComponent('MenuItem')(this.player_, {
+                label: height,
+                selectable: true,
+                selected: false,
+                multiSelectable: false,
+                clickHandler: () => {
+                  qualityLevels.levels_.forEach((lvl, idx) => {
+                    lvl.enabled = idx === index;
+                  });
+                  this.updateMenu(height);
+                  console.log(`Switched to bitrate: ${height}`);
+                }
+              });
+              items.push(item);
+            });
+            items.forEach(item => menu.addChild(item));
+          });
+
+          return menu;
+        },
+        updateMenu: function(label) {
+          this.el_.querySelector('.vjs-icon-placeholder').textContent = label;
+          const menuItems = this.menu.children();
+          menuItems.forEach(item => {
+            item.selected(item.options_.label === label);
+          });
+        },
+        buildCSSClass: function() {
+          return `vjs-quality-selector vjs-icon-cog`;
+        }
+      });
+
+      videojs.registerComponent('QualitySelector', QualitySelector);
+      player.controlBar.addChild('QualitySelector', {}, 9);
+
+      qualityLevels.on('change', () => {
+        const selectedLevel = qualityLevels.selectedIndex_;
+        if (selectedLevel >= 0 && qualityLevels.levels_[selectedLevel].enabled) {
+          const height = qualityLevels.levels_[selectedLevel].height || 
+                        `${Math.round(qualityLevels.levels_[selectedLevel].bitrate / 1000)}kbps`;
+          console.log(`Auto bitrate changed to: ${height} (Bandwidth: ${Math.round(player.bandwidth / 1000)}kbps)`);
+        }
+      });
+
+      player.on('error', () => {
+        const error = player.error();
+        const errorDisplay = document.getElementById('error-display');
+        errorDisplay.textContent = `Error: ${error.code} - ${error.message}`;
+        console.error('Player error:', error);
+        if (error.code === 2 || error.code === 4) {
+          console.log('Retrying in 5 seconds...');
+          setTimeout(() => {
+            player.load();
+            player.play();
+          }, 5000);
+        }
+      });
+
+      player.on('waiting', () => {
+        console.log('Buffering...');
+      });
+
+      player.on('canplay', () => {
+        console.log('Buffer filled, ready to play');
+      });
+
+      player.on('play', () => {
+        console.log('Video is playing');
+      });
+
+      player.on('pause', () => {
+        console.log('Video is paused');
+      });
+
+      player.on('fullscreenchange', () => {
+        if (player.isFullscreen()) {
+          console.log('Entered fullscreen');
+        } else {
+          console.log('Exited fullscreen');
+        }
+      });
     });
-  }
- 
-</script>
-
+  </script>
 </body>
 </html>
