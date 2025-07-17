@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Stable HLS Video Player</title>
-  <!-- Video.js CSS -->
+  <!-- Video.js CSS with fallback -->
   <link href="https://vjs.zencdn.net/8.10.0/video-js.css" rel="stylesheet" onerror="this.onerror=null; this.href='https://cdn.jsdelivr.net/npm/video.js@8.10.0/dist/video-js.min.css';">
   <style>
     body {
@@ -72,14 +72,12 @@
   <script src="https://vjs.zencdn.net/8.10.0/video.min.js" onerror="this.onerror=null; this.src='https://cdn.jsdelivr.net/npm/video.js@8.10.0/dist/video.min.js';"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      // Check if Video.js loaded successfully
       if (typeof videojs === 'undefined') {
         document.getElementById('error-display').textContent = 'Error: Video.js failed to load. Check console for details.';
         console.error('Video.js failed to load from both CDNs.');
         return;
       }
 
-      // Initialize Video.js player
       const player = videojs('my-video', {
         controls: true,
         autoplay: false,
@@ -94,7 +92,7 @@
             fastQualityChange: true,
             limitRenditionByPlayerDimensions: true,
             bandwidth: 2000000,
-            minBufferLength: 20 // Increased to 20s for better stability
+            minBufferLength: 20
           }
         }
       });
